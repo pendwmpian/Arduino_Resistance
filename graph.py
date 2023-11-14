@@ -17,7 +17,7 @@ def ReadSerial():
     global x
     global y
     val_raw = com.readline().decode("utf-8").rstrip("\r\n")
-    """
+    
     try:
         val = float(val_raw.split(" ")[1])
         time = float(val_raw.split(" ")[0])
@@ -25,7 +25,7 @@ def ReadSerial():
         y.append(val)
     except:
         print("Could not communicate with device.")
-    """
+    
 
 def SerialProgram():
     while True:
@@ -36,9 +36,9 @@ th0 = threading.Thread(target=SerialProgram, args=())
 th0.start()
 
 clfc = 0
-"""
+
 while True:
-    
+    """
     val_raw = com.readline().decode("utf-8").rstrip("\r\n")
     try:
         val = float(val_raw)
@@ -49,7 +49,7 @@ while True:
 
     x.append(time_sec)
     y.append(val)
-    
+    """
 
     clfc += 1
     if clfc % 30 == 0:
@@ -70,4 +70,3 @@ while True:
     import psutil
     mem = psutil.virtual_memory().free / 1e9
     #print(f'memory used: {mem} [GB]')
-"""

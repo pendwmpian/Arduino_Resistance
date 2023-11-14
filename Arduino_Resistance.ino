@@ -5,7 +5,7 @@ Adafruit_ADS1115 ads;  /* Use this for the 16-bit version */
 
 void setup(void)
 {
-  Serial.begin(9600);
+  Serial.begin(115200);
 
   Serial.println("ADC Range: +/- 6.144V (1 bit = 3mV/ADS1015, 0.1875mV/ADS1115)");
 
@@ -42,5 +42,5 @@ void loop(void)
 
   Serial.print(micros()); Serial.print(" "); Serial.println(String(results * multiplier / gain, 6));
 
-  delay(20);
+  //delay(20);
 }
