@@ -6,7 +6,6 @@ import tkinter as tk
 from tkinter import filedialog
 from tkinter import ttk
 import time
-import csv
 import cv2
 from PIL import Image, ImageTk
 import matplotlib.pyplot as plt
@@ -57,6 +56,7 @@ class Application(tk.Frame):
         self.video_data_f = None
         self.record_time_diff = None
         self.record_time_video = None
+        self.record_n_row = 0
 
         frame1 = ttk.Frame(self.master, padding=10)
         frame1.grid(row=2, column=0, sticky=tk.E)
@@ -64,8 +64,8 @@ class Application(tk.Frame):
         IDirLabel = ttk.Label(frame1, text="Save to folder", padding=(5, 2))
         IDirLabel.pack(side=tk.LEFT)
 
-        entry1 = tk.StringVar(self.master)
-        self.IDirEntry = ttk.Entry(frame1, textvariable=entry1, width=60)
+        self.entry1 = tk.StringVar(self.master)
+        self.IDirEntry = ttk.Entry(frame1, textvariable=self.entry1, width=60)
         self.IDirEntry.pack(side=tk.LEFT)
 
         ISubDirLabel = ttk.Label(frame1, text="/"+self.sub_dir, padding=(0, 2))
@@ -158,9 +158,9 @@ class Application(tk.Frame):
             self.is_recording = True
             self.RecordButton.configure(text="Record Stop")
         else:
+            self.is_recording = False
             self.recordDestructor()
-            self.video_display = False
-            self.CameraShowButton.configure(text="Record Start")    
+            self.RecordButton.configure(text="Record Start")    
 
     def click_close(self):
         self.halt_thread = True
@@ -267,7 +267,7 @@ class Application(tk.Frame):
     
     def recordConstructor(self):
         try:
-            dir = self.save_dir + "/" + self.sub_dir
+            dir = self.save_dir + "/" + self.sub_dir + "/"
             self.device_data_f = open(dir + "data.dat", "xb")
             fourcc = cv2.VideoWriter_fourcc('m','p','4', 'v')
             self.video_data_f = cv2.VideoWriter(dir + "video.mp4", fourcc, float(self.cap.get(cv2.CAP_PROP_FPS)), (int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))))
@@ -277,8 +277,10 @@ class Application(tk.Frame):
             return False
         
     def recordDestructor(self):
-        self.video_data_f.close()
+        self.device_data_f.seek(0x4, os.SEEK_SET)
+        self.device_data_f.write(struct.pack("<L", self.record_n_row))
         self.device_data_f.close()
+        self.video_data_f.release()
         self.record_time_diff = None
 
     def CameraCapture(self):
@@ -286,11 +288,11 @@ class Application(tk.Frame):
         while True:
             if self.halt_thread is True:
                 break
-            if self.cap is not None:
+            if self.video_display or self.is_recording:
                 ret, frame = self.cap.read()
-                if self.video_data_f is not None:
+                if self.is_recording:
                     self.video_data_f.write(frame)
-                    if self.record_time_diff is not None:
+                    if self.record_time_video is None:
                         self.record_time_video = time.time_ns()
             else: 
                 time.sleep(0.1)
@@ -312,11 +314,19 @@ class Application(tk.Frame):
             return False, data
         return True, data[1:7]
 
-    def recordDevice(self):
-        pass
+    def recordDevice(self, dat):
+        self.device_data_f.write(dat)
+        self.record_n_row += 1
 
     def recordInit(self):
-        pass
+        f = self.device_data_f
+        f.seek(0, os.SEEK_SET)
+        f.write(b"DAT\x00\x00\x00\x00\x00")
+        f.write(struct.pack('<l', self.record_time_diff))
+        f.write(b"\x00\x00\x00\x00")
+        f.write(time.strftime('%Y%m%d%H%M%S', time.localtime()).encode("ascii"))
+        f.write(b"\x00" * (0x20 - f.tell()))
+        self.record_n_row = 0
 
     def appendRecord2Graph(self, val, time):
         time = time + self.time_loop_cnt * 4294967296 - self.time_start_rec
@@ -338,18 +348,20 @@ class Application(tk.Frame):
             if ret is False:
                 return
             
-            if self.record_time_diff is not None:
-                self.recordDevice()
-            elif self.record_time_video is not None:
-                self.record_time_diff = time.time_ns() - self.record_time_video
-                self.recordDevice()
+            if self.is_recording:
+                if self.record_time_diff is not None:
+                    self.recordDevice(dat + b"\x00\x00")
+                elif self.record_time_video is not None:
+                    self.record_time_diff = time.time_ns() - self.record_time_video
+                    self.recordInit()
+                    self.recordDevice(dat + b"\x00\x00")
 
             if self.graph_display:
                 self.graph_interval_cnt += 1
                 if self.graph_interval_cnt % self.graph_interval == 0:
-                    time = struct.unpack('<L', dat[0:4])[0]
+                    tim = struct.unpack('<L', dat[0:4])[0]
                     val = struct.unpack('<h', dat[4:6])[0]
-                    self.appendRecord2Graph(val, time)
+                    self.appendRecord2Graph(val, tim)
             
         except:
             print("Could not communicate with device.")
@@ -358,7 +370,7 @@ class Application(tk.Frame):
         while True:
             if self.halt_thread is True:
                 break
-            if self.graph_display:
+            if self.graph_display or self.is_recording:
                 self.ReadSerial()
             print(time.time_ns())
 
