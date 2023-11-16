@@ -272,6 +272,7 @@ class Application(tk.Frame):
             fourcc = cv2.VideoWriter_fourcc('m','p','4', 'v')
             self.video_data_f = cv2.VideoWriter(dir + "video.mp4", fourcc, float(self.cap.get(cv2.CAP_PROP_FPS)), (int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))))
             self.record_time_diff = None
+            self.record_time_video = None
             return True
         except:
             return False
@@ -318,7 +319,7 @@ class Application(tk.Frame):
         self.device_data_f.write(dat)
         self.record_n_row += 1
 
-    def recordInit(self):
+    def recordInit(self, dat):
         f = self.device_data_f
         f.seek(0, os.SEEK_SET)
         f.write(b"DAT\x00\x00\x00\x00\x00")
@@ -327,6 +328,13 @@ class Application(tk.Frame):
         f.write(time.strftime('%Y%m%d%H%M%S', time.localtime()).encode("ascii"))
         f.write(b"\x00" * (0x20 - f.tell()))
         self.record_n_row = 0
+
+        # For Displaying Graph
+        self.time_loop_cnt = 0
+        self.time_start_rec = struct.unpack('<L', dat[0:4])[0]
+        self.graph_display_reset = False
+        self.graph_x.clear()
+        self.graph_y.clear()
 
     def appendRecord2Graph(self, val, time):
         time = time + self.time_loop_cnt * 4294967296 - self.time_start_rec
@@ -353,7 +361,7 @@ class Application(tk.Frame):
                     self.recordDevice(dat + b"\x00\x00")
                 elif self.record_time_video is not None:
                     self.record_time_diff = time.time_ns() - self.record_time_video
-                    self.recordInit()
+                    self.recordInit(dat)
                     self.recordDevice(dat + b"\x00\x00")
 
             if self.graph_display:
