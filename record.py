@@ -21,6 +21,11 @@ frame = None
 time_scale = 5.0
 packet_size = 9
 
+adc_multiplier = 0.1875
+amp_resistance = 390.0
+amp_gain = 1.0 + (100000.0 / amp_resistance)
+volt_coeff = adc_multiplier / amp_gain
+
 lock = threading.Lock()
 
 ports = list_ports.comports()
@@ -342,7 +347,7 @@ class Application(tk.Frame):
             self.time_loop_cnt += 1
             time += 4294967296
         self.graph_x.append(time / 1000000.0)
-        self.graph_y.append(val)
+        self.graph_y.append(val * volt_coeff)
 
     def ReadSerial(self):
         try:
