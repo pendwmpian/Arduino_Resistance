@@ -37,7 +37,7 @@ void setup(void)
     Wire.begin();
     Wire.beginTransmission(SLAVE_ADDR);
     Wire.write(0x01);
-    Wire.write(0x40);
+    Wire.write(0x42);
     Wire.write(0xE3);
     if(Wire.endTransmission()) SEND_ERROR_TO_SERIAL;
 }

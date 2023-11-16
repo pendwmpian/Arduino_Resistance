@@ -21,8 +21,8 @@ frame = None
 time_scale = 5.0
 packet_size = 9
 
-adc_multiplier = 0.1875
-amp_resistance = 390.0
+adc_multiplier = 0.125
+amp_resistance = 1000.0
 amp_gain = 1.0 + (100000.0 / amp_resistance)
 volt_coeff = adc_multiplier / amp_gain
 
@@ -239,7 +239,7 @@ class Application(tk.Frame):
             if self.deviceID == dev:
                 return True
             with lock:
-                self.com = serial.Serial(dev, 9600)
+                self.com = serial.Serial(dev, 115200)
             self.deviceID = dev
             return True
         else:
@@ -385,7 +385,7 @@ class Application(tk.Frame):
                 break
             if self.graph_display or self.is_recording:
                 self.ReadSerial()
-            print(time.time_ns())
+            else: time.sleep(0.001)
 
 
 root = tk.Tk()
