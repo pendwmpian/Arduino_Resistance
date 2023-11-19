@@ -26,6 +26,9 @@ amp_resistance = 1000.0
 amp_gain = 1.0 + (100000.0 / amp_resistance)
 volt_coeff = adc_multiplier / amp_gain
 
+camera_width = 1080
+camera_height = 1920
+
 lock = threading.Lock()
 
 ports = list_ports.comports()
@@ -228,6 +231,9 @@ class Application(tk.Frame):
                 if self.cap != None:
                     self.cap.release()
                 self.cap = cv2.VideoCapture(camID)
+                self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, camera_width)
+                self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_height)
+                self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
             self.cameraID = camID
             return True
         else:
