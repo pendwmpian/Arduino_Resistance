@@ -22,7 +22,7 @@ time_scale = 5.0
 packet_size = 9
 
 adc_multiplier = 0.125
-amp_resistance = 1000.0
+amp_resistance = 390.0
 amp_gain = 1.0 + (100000.0 / amp_resistance)
 volt_coeff = adc_multiplier / amp_gain
 
