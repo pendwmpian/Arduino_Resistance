@@ -23,13 +23,15 @@ def loadData(path):
         f.seek(32, os.SEEK_SET)
         time_base = struct.unpack('<L', f.read(4))[0]
         time.append(time_diff_ms)
-        data.append(struct.unpack('<l', f.read(4))[0])
+        data.append(struct.unpack('<h', f.read(2))[0])
+        _ = struct.unpack('<h', f.read(2))[0]
         for i in range(nrow - 1):
             time_buf = struct.unpack('<L', f.read(4))[0] + time_diff_ms
             if time_buf + time_loop_cnt * 4294967296 - time_base < time[-1]:
                 time_loop_cnt += 1
             time.append(time_buf + time_loop_cnt * 4294967296 - time_base)
-            data.append(struct.unpack('<l', f.read(4))[0])
+            data.append(struct.unpack('<h', f.read(2))[0])
+            _ = struct.unpack('<h', f.read(2))[0]
     return data, time
 
 
