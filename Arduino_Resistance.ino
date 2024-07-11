@@ -3,6 +3,7 @@
 
 #define SEND_ERROR_TO_SERIAL Serial.println("Failed to connect with device.")
 #define SLAVE_ADDR 0x48
+#define LOOP_DURATION 1000000 / 860
 
 union Data {
     struct __attribute__((__packed__)) {
@@ -37,14 +38,20 @@ void setup(void)
     Wire.begin();
     Wire.beginTransmission(SLAVE_ADDR);
     Wire.write(0x01);
-    Wire.write(0x42);
+    Wire.write(0x72);
     Wire.write(0xE3);
     if(Wire.endTransmission()) SEND_ERROR_TO_SERIAL;
 }
 
+uint32_t time_prev = 0;
 
 void loop(void)
 {
+    auto t = micros();
+    while(t - time_prev < LOOP_DURATION) t = micros();
+
+    time_prev = t;
+
     Data result;
     uint8_t encoded[sizeof(Data) + 2];
 
@@ -71,5 +78,5 @@ void loop(void)
 
     result.time = micros();
     encodeCOBS(&result, encoded);
-    for(uint8_t i = 0; i < sizeof(encoded); i++) Serial.write(encoded[i]);
+    Serial.write(encoded, sizeof(encoded));
 }
